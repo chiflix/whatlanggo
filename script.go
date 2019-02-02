@@ -36,10 +36,9 @@ var Scripts = map[*unicode.RangeTable]string{
 	unicode.Khmer:      "Khmer",
 }
 
-//DetectScript returns only the script of the given text.
-func DetectScript(text string) *unicode.RangeTable {
-	halfLen := len(text) / 2
-
+//DetectScripts returns the scripts cantained in the given text.
+// and the text of that scripts
+func DetectScripts(text string) map[*unicode.RangeTable]string {
 	scriptCounter := []scriptCounter{
 		{isLatin, unicode.Latin, new(int)},
 		{isCyrillic, unicode.Cyrillic, new(int)},
@@ -66,18 +65,20 @@ func DetectScript(text string) *unicode.RangeTable {
 		{isKhmer, unicode.Khmer, new(int)},
 	}
 
+	res := make(map[*unicode.RangeTable]string)
 	for _, ch := range text {
-		if isStopChar(ch) {
+		if isStopChar(ch) { // in fact it means isSkipChar
+			// add space to all sciprts in res
+			for k := range res {
+				res[k] += " "
+			}
 			continue
 		}
 
 		for i, sc := range scriptCounter {
 			if sc.checkFunc(ch) {
 				*sc.count++
-				if *sc.count > halfLen {
-					return sc.script
-				}
-
+				res[sc.script] += string(ch)
 				//if script is found, move it closer to the front so that it be checked first.
 				if i > 0 {
 					scriptCounter[i], scriptCounter[i-1] = scriptCounter[i-1], scriptCounter[i]
@@ -87,31 +88,26 @@ func DetectScript(text string) *unicode.RangeTable {
 	}
 
 	//find the script that occurs the most in the text and return it.
-	jpCount := 0
-	max := 0
-	maxScript := &unicode.RangeTable{}
-	for _, script := range scriptCounter {
-		if *script.count > max {
-			max = *script.count
-			maxScript = script.script
-			if script.script == _HiraganaKatakana {
-				jpCount = max
-			}
+	if _, ok := res[_HiraganaKatakana]; ok {
+		if _, ok := res[unicode.Han]; ok {
+			res[_HiraganaKatakana] += res[unicode.Han]
 		}
 	}
+	return res
+}
 
-	switch {
-	case max == 0:
-		//if no valid script is detected, return nil.
-		return nil
-	case max != 0 && (maxScript == unicode.Han && jpCount > 0):
-		// If Hiragana or Katakana is included, even if judged as Mandarin,
-		// it is regarded as Japanese. Japanese uses Kanji (unicode.Han)
-		// in addition to Hiragana and Katakana.
-		return _HiraganaKatakana
-	default:
-		return maxScript
+//DetectScript returns only the script of the given text.
+func DetectScript(text string) *unicode.RangeTable {
+	scs := DetectScripts(text)
+	max := 0
+	var maxScript *unicode.RangeTable
+	for k, v := range scs {
+		if len(v) > max {
+			max = len(v)
+			maxScript = k
+		}
 	}
+	return maxScript
 }
 
 var isCyrillic = func(r rune) bool {

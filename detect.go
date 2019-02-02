@@ -36,6 +36,22 @@ func DetectWithOptions(text string, options Options) Info {
 
 }
 
+//DetectLangsWithOptions detects the language and script of the given text with the provided options.
+func DetectLangsWithOptions(text string, options Options) map[Lang]float64 {
+	res := make(map[Lang]float64)
+	scripts := DetectScripts(text)
+	total := float64(0)
+	for rt, s := range scripts {
+		lang := detectLangBaseOnScript(s, options, rt)
+		res[lang] = float64(len(s)) // TODO: some script weight more than others
+		total += res[lang]
+	}
+	for k, v := range res {
+		res[k] = v * 2 / total
+	}
+	return res
+}
+
 func detectLangBaseOnScript(text string, options Options, script *unicode.RangeTable) Lang {
 	switch script {
 	case unicode.Latin:
