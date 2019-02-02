@@ -440,6 +440,23 @@ func LangToStringShort(lang Lang) string {
 	}
 }
 
+// StringShortToLang converts iso639-1 code to lang
+// -1 if match not found
+func StringShortToLang(code string) Lang {
+	// TODO: fast switch version to replace this slow version
+	for k := range Langs {
+		if LangToStringShort(k) == code {
+			return k
+		}
+	}
+	return -1
+}
+
+// LangToStringLong converts enum into human friendly language describtion.
+func LangToStringLong(lang Lang) string {
+	return Langs[lang]
+}
+
 //LangToString converts enum into ISO 639-3 code as a string.
 func LangToString(lang Lang) string {
 	switch lang {
