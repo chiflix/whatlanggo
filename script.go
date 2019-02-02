@@ -68,9 +68,11 @@ func DetectScripts(text string) map[*unicode.RangeTable]string {
 	res := make(map[*unicode.RangeTable]string)
 	for _, ch := range text {
 		if isStopChar(ch) { // in fact it means isSkipChar
-			// add space to all sciprts in res
-			for k := range res {
-				res[k] += " "
+			if unicode.IsSpace(ch) {
+				// add space to all sciprts in res
+				for k := range res {
+					res[k] += " "
+				}
 			}
 			continue
 		}

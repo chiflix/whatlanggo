@@ -104,6 +104,10 @@ func detectLangBaseOnScript(text string, options Options, script *unicode.RangeT
 	return -1
 }
 func detectLangInProfiles(text string, options Options, langProfileList langProfileList) Lang {
+	if len(text) > 2048 { // ass max length to improve accuracy
+		text = text[:2047]
+	}
+
 	trigrams := getTrigramsWithPositions(text)
 	type langDistance struct {
 		lang Lang
